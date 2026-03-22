@@ -9,126 +9,117 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Platformer")
 clock = pygame.time.Clock()
 
-font = pygame.font.Font(None,32)
-big_font = pygame.font.Font(None,64)
+font = pygame.font.Font(None, 32)
+big_font = pygame.font.Font(None, 64)
 
 Gravity = 0.8
 
 Level_Width = 2200
 
+
 class Platform:
     def __init__(self, x, y, width, height):
         self.rect = pygame.Rect(x, y, width, height)
 
-    def draw(self,surf,camera_x = 0):
-        pygame.draw.rect(surf,(255,255,255),(self.rect.x - camera_x,self.rect.y, self.rect.width,self.rect.height))
-
+    def draw(self, surf, camera_x=0):
+        pygame.draw.rect(surf, (255, 255, 255),
+                         (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height))
 
 
 class Coin:
 
     def __init__(self, x, y):
-        self.rect = pygame.Rect(x,y,20,20)
+        self.rect = pygame.Rect(x, y, 20, 20)
 
-    def draw(self,surf, camera_x = 0):
-        pygame.draw.circle(surf,(255,215,0),(self.rect.centerx - camera_x,self.rect.centery),10)
+    def draw(self, surf, camera_x=0):
+        pygame.draw.circle(surf, (255, 215, 0), (self.rect.centerx - camera_x, self.rect.centery), 10)
 
 
 class Enemy:
 
-    def __init__(self, x, y,left_limit, right_limit):
-        self.rect = pygame.Rect(x,y,40,40)
+    def __init__(self, x, y, left_limit, right_limit):
+        self.rect = pygame.Rect(x, y, 40, 40)
         self.speed = 2
         self.dir = 1
         self.left_limit = left_limit
         self.right_limit = right_limit
 
-
     def update(self):
-
         self.rect.x += self.speed * self.dir
 
         if self.rect.left < self.left_limit or self.rect.right >= self.right_limit:
             self.dir *= -1
 
-    def draw(self,surf,camera_x = 0):
-        pygame.draw.rect(surf,(220, 70, 70),(self.rect.x - camera_x,self.rect.y, self.rect.width,self.rect.height))
-
+    def draw(self, surf, camera_x=0):
+        pygame.draw.rect(surf, (220, 70, 70), (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height))
 
 
 class Player:
 
-        def __init__(self):
-            self.rect = pygame.Rect(60,300,40,40)
+    def __init__(self):
+        self.rect = pygame.Rect(60, 300, 40, 40)
 
-            self.vel_y = 0
-            self.speed = 5
+        self.vel_y = 0
+        self.speed = 5
+        self.on_ground = False
+
+        self.lives = 3
+        self.invuln = 0
+
+    def jump(self):
+
+        if self.on_ground:
+            self.vel_y = -14
             self.on_ground = False
 
-            self.lives = 3
-            self.invuln = 0
+    def hit(self):
 
-        def jump(self):
+        if self.invuln == 0:
+            self.lives -= 1
+            self.vel_y = -10
+            self.invuln = 60
 
-            if self.on_ground:
-                self.vel_y = -14
-                self.on_ground = False
+    def update(self, platforms):
 
-        def hit(self):
+        keys = pygame.key.get_pressed()
 
-            if self.invuln == 0:
-                self.lives -= 1
-                self.vel_y = -10
-                self.invuln = 60
+        dx = 0
+        if keys[pygame.K_LEFT]:
+            dx -= self.speed
+        if keys[pygame.K_RIGHT]:
+            dx += self.speed
+
+        self.rect.x += dx
+
+        if self.rect.left < 0:
+            self.rect.left = 0
+
+        if self.rect.right > Level_Width:
+            self.rect.right = Level_Width
+
+        self.vel_y += Gravity
+        self.rect.y += self.vel_y
+
+        self.on_ground = False
+
+        for p in platforms:
+            if self.rect.colliderect(p.rect) and p.vel_y > 0:
+                self.rect.bottom = p.rect.top
+                self.vel_y = 0
+                self.on_ground = True
+
+        if self.rect.top > HEIGHT:
+            self.lives = 0
+
+        if self.invuln > 0:
+            self.invuln -= 1
 
 
-        def update(self,platforms):
-
-            keys = pygame.key.get_pressed()
-
-            dx = 0
-            if keys[pygame.K_LEFT]:
-                dx -= self.speed
-            if keys[pygame.K_RIGHT]:
-                dx += self.speed
-
-            self.rect.x += dx
-
-
-            if self.rect.left < 0:
-                self.rect.left = 0
-
-
-            if self.rect.right > Level_Width:
-                self.rect.right = Level_Width
-
-
-            self.vel_y += Gravity
-            self.rect.y += self.vel_y
-
-
-            self.on_ground = False
-
-            for p in platforms:
-                if self.rect.colliderect(p.rect) and p.vel_y > 0:
-
-                    self.rect.bottom = p.rect.top
-                    self.vel_y = 0
-                    self.on_ground = True
-
-            if self.rect.top > HEIGHT:
-                self.lives = 0
-
-            if self.invuln > 0:
-                self.invuln -= 1
-
-def draw(self,surf,camera_x = 0):
-
-    if self.invuln > 0 and (self.invuln % 10) <5:
+    def draw(self, surf, camera_x=0):
+     if self.invuln > 0 and (self.invuln % 10) < 5:
         return
 
-    pygame.draw.rect(surf, (80,140,255),(self.rect.x - camera_x,self.rect.y, self.rect.width,self.rect.height))
-
+     pygame.draw.rect(surf, (80, 140, 255), (self.rect.x - camera_x, self.rect.y, self.rect.width, self.rect.height))
 
 
 class Game:
@@ -140,7 +131,7 @@ class Game:
         self.player = Player()
         self.platforms = [
 
-            Platform(0,HEIGHT - 40, Level_Width,40),
+            Platform(0, HEIGHT - 40, Level_Width, 40),
 
             Platform(140, 330, 180, 20),
             Platform(380, 260, 160, 20),
@@ -154,14 +145,14 @@ class Game:
         ]
 
         self.coins = [
-            Coin(200,300),
-            Coin(430,230),
-            Coin(600,290),
+            Coin(200, 300),
+            Coin(430, 230),
+            Coin(600, 290),
 
-            Coin(980,270),
-            Coin(1260,220),
-            Coin(1560,310),
-            Coin(1900,250),
+            Coin(980, 270),
+            Coin(1260, 220),
+            Coin(1560, 310),
+            Coin(1900, 250),
         ]
         self.enemies = [
 
@@ -175,12 +166,17 @@ class Game:
         self.score = 0
         self.game_over = False
 
-        self.camera_x = 0
+        self.finish = pygame.Rect(2050, HEIGHT -100,40,60)
+
+    def update_camera(self):
+
+        self.camera_x = max(0, min(self.player.rect.centerx - WIDTH // 2, Level_Width - WIDTH))
+
 
     def collect_coins(self):
         for coin in self.coins[:]:
-            if self.player.rect.colliderect(coin.rect)
-            self.coins.remove()
+            if self.player.rect.colliderect(coin.rect):
+                self.coins.remove()
             self.score += 1
 
         for c in self.coins:
@@ -190,17 +186,15 @@ class Game:
 
     def enemy_hits(self):
 
-        
-
         for e in self.enemies:
             if self.player.rect.colliderect(e.rect):
                 self.player.hit()
                 self.player.lives -= 1
 
-
-    def update_camera(self):
-        self.camera_x = 0
-
+    def check_finish(self):
+        if self.player.rect.colliderect(self.finish):
+            print("Уровень пройден")
+            
 
 
     def run(self):
@@ -214,7 +208,7 @@ class Game:
 
                     if event.key == pygame.K_ESCAPE:
                         self.player.jump()
-                    if event.key == pygame.K_r and  self.game_over:
+                    if event.key == pygame.K_r and self.game_over:
                         self.reset()
 
                 if not self.game_over:
@@ -231,36 +225,34 @@ class Game:
 
                     self.update_camera()
 
-                screen.fill((135,206,234))
+                screen.fill((135, 206, 234))
 
                 for p in self.platforms:
-                    p.draw(screen,self.camera_x)
+                    p.draw(screen, self.camera_x)
 
                 for c in self.coins:
-                    c.draw(screen,self.camera_x)
+                    c.draw(screen, self.camera_x)
 
                 for i in self.enemies:
-                    i.draw(screen,self.camera_x)
+                    i.draw(screen, self.camera_x)
 
-             
+                self.player.draw(screen, self.camera_x)
 
-                self.player.draw(screen,self.camera_x)
-
-                screen.blit(font.render(F"Score: "+ str(self.score), True, (0,0,0)), (10,10))
+                screen.blit(font.render(F"Score: " + str(self.score), True, (0, 0, 0)), (10, 10))
                 screen.blit(font.render(F"lives: " + str(self.player.lives), True, (0, 0, 0)), (10, 10))
 
                 if self.game.over:
+                    t1 = big_font.render("Game Over", True, (200, 0, 0))
+                    t2 = font.render("Press R to restart", True, (0, 0, 0))
 
-                    t1 = big_font.render("Game Over", True, (200,0,0))
-                    t2 = font.render("Press R to restart", True, (0,0,0))
-
-                    screen.blit(t1.get_rect(center=(WIDTH // 2,HEIGHT // 2 - 20)))
-                    screen.blit(t2.get_rect(center=(WIDTH // 2,HEIGHT // 2 + 25)))
+                    screen.blit(t1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 20)))
+                    screen.blit(t2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 25)))
 
                 pygame.display.flip()
                 clock.tick(60)
 
             pygame.quit()
             sys.exit()
+
 
 Game().run()
