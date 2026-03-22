@@ -14,7 +14,7 @@ big_font = pygame.font.Font(None,64)
 
 Gravity = 0.8
 
-Level_Width = 800
+Level_Width = 2200
 
 class Platform:
     def __init__(self, x, y, width, height):
@@ -46,7 +46,7 @@ class Enemy:
 
     def update(self):
 
-        self.rect.y += self.speed * self.dir
+        self.rect.x += self.speed * self.dir
 
         if self.rect.left < self.left_limit or self.rect.right >= self.right_limit:
             self.dir *= -1
@@ -71,7 +71,7 @@ class Player:
         def jump(self):
 
             if self.on_ground:
-                self.vel_y = 14
+                self.vel_y = -14
                 self.on_ground = False
 
         def hit(self):
@@ -178,6 +178,10 @@ class Game:
         self.camera_x = 0
 
     def collect_coins(self):
+        for coin in self.coins[:]:
+            if self.player.rect.colliderect(coin.rect)
+            self.coins.remove()
+            self.score += 1
 
         for c in self.coins:
             if self.player.rect.colliderect(c.rect):
@@ -185,6 +189,8 @@ class Game:
                 self.coins.remove(c)
 
     def enemy_hits(self):
+
+        
 
         for e in self.enemies:
             if self.player.rect.colliderect(e.rect):
@@ -208,7 +214,7 @@ class Game:
 
                     if event.key == pygame.K_ESCAPE:
                         self.player.jump()
-                    if event.key == pygame.K_r and not self.game_over:
+                    if event.key == pygame.K_r and  self.game_over:
                         self.reset()
 
                 if not self.game_over:
@@ -236,9 +242,7 @@ class Game:
                 for i in self.enemies:
                     i.draw(screen,self.camera_x)
 
-                for z in self.enemies:
-                    z.draw(screen,self.camera_x)
-
+             
 
                 self.player.draw(screen,self.camera_x)
 
